@@ -15,15 +15,26 @@
     --accent: #2d6e1f;
   }
   body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
+  .header-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   header h1 { font-size: 1.2rem; font-weight: 600; letter-spacing: -0.02em; }
   .sync-badge { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); background: var(--surface2); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border); }
   .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #7ec86a; transition: background 0.3s; }
   .sync-dot.syncing { background: #f0a020; animation: blink 0.7s infinite; }
   .sync-dot.error { background: #e24a4a; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-  main { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
 
+  .export-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .export-btn { display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 8px; font-size: 12px; font-family: inherit; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); transition: background 0.15s; white-space: nowrap; }
+  .export-btn:hover { background: var(--surface2); }
+  .export-btn.all { border-color: #b8d4f0; background: #eaf3fb; color: #185fa5; }
+  .export-btn.all:hover { background: #d5e9f8; }
+  .export-btn.paid { border-color: var(--green-border); background: var(--green-bg); color: var(--green-text); }
+  .export-btn.paid:hover { background: #d4edca; }
+  .export-btn.unpaid { border-color: var(--red-border); background: var(--red-bg); color: var(--red-text); }
+  .export-btn.unpaid:hover { background: #fad6d4; }
+
+  main { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
   .stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 1.5rem; }
   .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem 1rem; }
   .stat-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -70,19 +81,8 @@
   .slot.taken-unpaid { background: var(--red-bg); border-color: var(--red-border); color: var(--red-text); }
   .slot .num { font-size: 10px; line-height: 1; }
   .slot .ini { font-size: 14px; font-weight: 600; line-height: 1; margin-top: 1px; }
-  .slot .tip {
-    display: none; position: absolute;
-    bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%);
-    background: #1a1a18; color: #fff;
-    font-size: 11px; font-weight: 400;
-    padding: 4px 9px; border-radius: 6px;
-    white-space: nowrap; pointer-events: none; z-index: 50;
-  }
-  .slot .tip::after {
-    content: ''; position: absolute;
-    top: 100%; left: 50%; transform: translateX(-50%);
-    border: 4px solid transparent; border-top-color: #1a1a18;
-  }
+  .slot .tip { display: none; position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%); background: #1a1a18; color: #fff; font-size: 11px; font-weight: 400; padding: 4px 9px; border-radius: 6px; white-space: nowrap; pointer-events: none; z-index: 50; }
+  .slot .tip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 4px solid transparent; border-top-color: #1a1a18; }
   .slot:hover .tip { display: block; }
 
   .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
@@ -111,6 +111,8 @@
     .grid { gap: 4px; }
     .slot .ini { font-size: 11px; }
     .name-list { grid-template-columns: 1fr 1fr; }
+    .export-group { width: 100%; }
+    .export-btn { flex: 1; justify-content: center; }
   }
 </style>
 </head>
@@ -119,10 +121,17 @@
 <div class="loading" id="loading">Conectando...</div>
 
 <header>
-  <h1>🎟️ Control de Rifa</h1>
-  <div class="sync-badge">
-    <span class="sync-dot" id="sync-dot"></span>
-    <span id="sync-label">En vivo</span>
+  <div class="header-left">
+    <h1>🎟️ Control de Rifa</h1>
+    <div class="sync-badge">
+      <span class="sync-dot" id="sync-dot"></span>
+      <span id="sync-label">En vivo</span>
+    </div>
+  </div>
+  <div class="export-group">
+    <button class="export-btn all" onclick="exportExcel('all')">⬇ Todo</button>
+    <button class="export-btn paid" onclick="exportExcel('paid')">⬇ Pagados</button>
+    <button class="export-btn unpaid" onclick="exportExcel('unpaid')">⬇ Sin pagar</button>
   </div>
 </header>
 
@@ -167,6 +176,9 @@
   </div>
 </div>
 
+<!-- SheetJS -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -206,6 +218,72 @@
     return p.length===1 ? p[0][0].toUpperCase() : (p[0][0]+p[p.length-1][0]).toUpperCase();
   }
 
+  // ── Exportar Excel ──────────────────────────────────────────────
+  window.exportExcel = function(tipo) {
+    const XLSX = window.XLSX;
+    if (!XLSX) { alert('La librería de Excel aún no ha cargado. Intenta en un momento.'); return; }
+
+    let lista, nombreArchivo, titulo;
+    if (tipo === 'all') {
+      lista = slots.filter(s => s.name);
+      nombreArchivo = 'rifa_completa.xlsx';
+      titulo = 'Todos los participantes';
+    } else if (tipo === 'paid') {
+      lista = slots.filter(s => s.name && s.paid);
+      nombreArchivo = 'rifa_pagados.xlsx';
+      titulo = 'Pagados';
+    } else {
+      lista = slots.filter(s => s.name && !s.paid);
+      nombreArchivo = 'rifa_sin_pagar.xlsx';
+      titulo = 'Sin pagar';
+    }
+
+    const wb = XLSX.utils.book_new();
+
+    // Hoja principal
+    const filas = [
+      ['Control de Rifa — ' + titulo],
+      [],
+      ['Boleta', 'Nombre', 'Estado', 'Valor (COP)']
+    ];
+    lista.forEach(s => {
+      filas.push([s.id, s.name, s.paid ? 'Pagado' : 'Sin pagar', PRECIO]);
+    });
+    filas.push([]);
+    filas.push(['', '', 'TOTAL', lista.length * PRECIO]);
+
+    const ws = XLSX.utils.aoa_to_sheet(filas);
+
+    // Anchos de columna
+    ws['!cols'] = [{wch:8}, {wch:32}, {wch:14}, {wch:16}];
+
+    XLSX.utils.book_append_sheet(wb, ws, titulo.substring(0,31));
+
+    // Hoja resumen (solo en exportación completa)
+    if (tipo === 'all') {
+      const pagados  = slots.filter(s => s.name && s.paid).length;
+      const sinPagar = slots.filter(s => s.name && !s.paid).length;
+      const libres   = slots.filter(s => !s.name).length;
+      const resumen = [
+        ['Resumen de la Rifa'],
+        [],
+        ['Concepto', 'Boletas', 'Valor (COP)'],
+        ['Pagados',    pagados,    pagados * PRECIO],
+        ['Sin pagar',  sinPagar,   sinPagar * PRECIO],
+        ['Libres',     libres,     libres * PRECIO],
+        [],
+        ['Total',      100,        100 * PRECIO],
+        ['Recaudado',  pagados,    pagados * PRECIO],
+        ['Pendiente',  sinPagar,   sinPagar * PRECIO],
+      ];
+      const wsR = XLSX.utils.aoa_to_sheet(resumen);
+      wsR['!cols'] = [{wch:14}, {wch:10}, {wch:18}];
+      XLSX.utils.book_append_sheet(wb, wsR, 'Resumen');
+    }
+
+    XLSX.writeFile(wb, nombreArchivo);
+  };
+
   function setFilter(f, el) {
     filter = f;
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -243,19 +321,17 @@
         <div class="stat-sub">${fmt(unpaid*PRECIO)} pendiente</div>
       </div>`;
 
-    // Panel lista de nombres
     const nlp = document.getElementById('nlp');
     if (filter==='paid' || filter==='unpaid') {
       const isPaid = filter==='paid';
       const lista = slots.filter(s=>s.name && s.paid===isPaid);
-      const monto = lista.length * PRECIO;
       nlp.classList.add('visible');
       document.getElementById('nl-title').textContent =
         isPaid ? `${lista.length} boleta${lista.length!==1?'s':''} pagada${lista.length!==1?'s':''}`
-                : `${lista.length} boleta${lista.length!==1?'s':''} sin pagar`;
+               : `${lista.length} boleta${lista.length!==1?'s':''} sin pagar`;
       const tot = document.getElementById('nl-total');
       tot.className = 'name-list-total ' + (isPaid?'green':'red');
-      tot.textContent = 'Total: ' + fmt(monto);
+      tot.textContent = 'Total: ' + fmt(lista.length * PRECIO);
       const nl = document.getElementById('nl');
       nl.innerHTML = '';
       lista.forEach(s => {
@@ -268,7 +344,6 @@
       nlp.classList.remove('visible');
     }
 
-    // Grid
     const grid = document.getElementById('grid');
     grid.innerHTML = '';
     slots.forEach(slot => {
